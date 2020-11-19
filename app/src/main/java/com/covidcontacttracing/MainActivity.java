@@ -23,3 +23,4 @@ public class MainActivity extends AppCompatActivity {
         startActivity(beacon);
     }
 }
+  zxfszdf
