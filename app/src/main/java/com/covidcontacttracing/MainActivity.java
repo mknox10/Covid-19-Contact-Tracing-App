@@ -33,7 +33,29 @@ public class MainActivity extends AppCompatActivity {
         bttnTxt.setText("Beacon on");
     }
 
+    public void CheckExposure(View view){
+        //check the database fore recent exposure
 
-//dxxvxv
+
+
+
+
+        TextView lblExposure = (TextView) findViewById(R.id.lblExposure);
+        boolean wasExposed = false;
+
+        if(wasExposed ) {
+            lblExposure.setText("You have been exposed please check CDC guiedlines on how to quarantine ");
+        }else{
+            lblExposure.setText("You have not been exposed");
+        }
+
+
+    }
+
+
+
+
+
+
 
 }
