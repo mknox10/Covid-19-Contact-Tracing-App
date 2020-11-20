@@ -37,9 +37,6 @@ public class MainActivity extends AppCompatActivity {
         //check the database fore recent exposure
 
 
-
-
-
         TextView lblExposure = (TextView) findViewById(R.id.lblExposure);
         boolean wasExposed = false;
 
@@ -49,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
             lblExposure.setText("You have not been exposed");
         }
 
-
     }
 
 
@@ -57,10 +53,6 @@ public class MainActivity extends AppCompatActivity {
         //push to the database that you have a positive test result
 
 
-
     }
-
-
-
 
 }
