@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         /* Start the Beacon */
         startActivity(beacon);
 
-        TextView bttnTxt = (TextView) findViewById(R.id.StartBeaconBttn);
+        TextView bttnTxt = findViewById(R.id.StartBeaconBttn);
         bttnTxt.setText("Beacon on");
     }
 
@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
 
 
     public void PositiveResult(View view){
