@@ -53,7 +53,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    public void PositiveResult(View view){
+        //push to the database that you have a positive test result
 
+
+
+    }
 
 
 
