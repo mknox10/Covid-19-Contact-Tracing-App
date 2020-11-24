@@ -4,17 +4,28 @@ import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.bluetooth.le.AdvertiseCallback;
+import android.bluetooth.le.AdvertiseSettings;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.BeaconTransmitter;
+
+import java.util.Arrays;
+
 public class BeaconService extends Service {
+
+    private static final String TAG = "BeaconService";
 
     Thread beaconThread;
 
@@ -36,8 +47,8 @@ public class BeaconService extends Service {
             return;
 
             /*
-            * Not sure what this stuff is for? @Brett?
-            */
+             * Not sure what this stuff is for? @Brett?
+             */
 
             /*createNotificationChannel();
             Notification builder = new Notification.Builder(this, "chMe")
@@ -48,8 +59,8 @@ public class BeaconService extends Service {
             builder.flags |= Notification.FLAG_FOREGROUND_SERVICE;
 
             startForeground(1995, builder);*/
-                //Get permission for media projection
-                //mediaManager = (MediaProjectionManager)getSystemService(android.content.Context.MEDIA_PROJECTION_SERVICE);
+            //Get permission for media projection
+            //mediaManager = (MediaProjectionManager)getSystemService(android.content.Context.MEDIA_PROJECTION_SERVICE);
         }
 
 
@@ -57,7 +68,10 @@ public class BeaconService extends Service {
         beaconThread = new Thread(() -> {
             //Looper.prepare();
             long startTime = System.currentTimeMillis();
-            while(true){
+
+            //Transmit the beacon - I'm pretty sure we don't need a for loop for this - Mitch
+            transmitBeacon();
+            while (true) {
                 long currentTime = System.currentTimeMillis();
                 // What is this Toast stuff?
                 //Toast.makeText(this, "Minutes since start: "+((currentTime - startTime) / 60)+" min", Toast.LENGTH_SHORT).show();
@@ -106,5 +120,34 @@ public class BeaconService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void transmitBeacon() {
+
+        Beacon beacon = new Beacon.Builder()
+                .setId1("2f234454-cf6d-4a0f-adf2-f4911ba9ffa6") // Not a clue what this means -
+                .setId2("1")                                    // https://altbeacon.github.io/android-beacon-library/beacon-transmitter.html
+                .setId3("2")
+                .setManufacturer(0x0118)
+                .setTxPower(-59)
+                .setDataFields(Arrays.asList(new Long[]{0l})) // Remove this for beacon layouts without d: fields
+                .build();
+        BeaconParser beaconParser = new BeaconParser()
+                .setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25");
+        //todo: the app is being crashed here, could be the beaconTransmitter or the beaconParser. My money is on the parser, I'll figure it out later.
+//        BeaconTransmitter beaconTransmitter = new BeaconTransmitter(getApplicationContext(), beaconParser);
+//        beaconTransmitter.startAdvertising(beacon, new AdvertiseCallback() {
+//
+//            @Override
+//            public void onStartFailure(int errorCode) {
+//                Log.e(TAG, "Advertisement start failed with code: " + errorCode);
+//            }
+//
+//            @Override
+//            public void onStartSuccess(AdvertiseSettings settingsInEffect) {
+//                Log.i(TAG, "Advertisement start succeeded.");
+//            }
+//        });
     }
 }
