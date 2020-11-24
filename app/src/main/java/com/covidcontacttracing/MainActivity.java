@@ -20,15 +20,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-
-
     public void startBeacon(View view) {
         /* Create the Activity which will run the Beacon Process. */
         //Intent beacon = new Intent(this, BeaconActivity.class);
         /* Start the Beacon */
-<<<<<<< Updated upstream
-        startActivity(beacon);
+        //startActivity(beacon);
+        Intent beacon = new Intent(this, BeaconService.class);
+        startService(beacon);
 
         TextView bttnTxt = findViewById(R.id.StartBeaconBttn);
         bttnTxt.setText("Beacon on");
@@ -47,14 +45,7 @@ public class MainActivity extends AppCompatActivity {
             lblExposure.setText("You have not been exposed");
         }
 
-=======
-        //startActivity(beacon);
-        Intent beacon = new Intent(this, BeaconService.class);
-        startService(beacon);
->>>>>>> Stashed changes
     }
-
-
 
     public void PositiveResult(View view){
         //push to the database that you have a positive test result
