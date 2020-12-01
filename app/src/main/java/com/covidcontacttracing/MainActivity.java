@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -18,12 +19,14 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
 
+    private static final String TAG = "MainActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Ask permission to use location - Mitch
+        // Ask permission to use location
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
@@ -88,20 +91,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startBeacon(View view) {
-        /* Create the Activity which will run the Beacon Process. */
-        //Intent beacon = new Intent(this, BeaconActivity.class);
-        /* Start the Beacon */
-        //startActivity(beacon);
-        Intent beacon = new Intent(this, BeaconService.class);
-        startService(beacon);
 
-        TextView bttnTxt = findViewById(R.id.StartBeaconBttn);
-        bttnTxt.setText("Beacon on");
+        /* Start the Beacon */
+        TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
+        try {
+            Intent beacon = new Intent(this, BeaconService.class);
+            startService(beacon);
+            beaconBttn.setText("Broadcasting");
+        } catch (Exception e) {
+            beaconBttn.setText("Failed To Launch");
+            Log.println(Log.ERROR, TAG, e.toString());
+        }
+
     }
 
     public void CheckExposure(View view) {
         //todo: check the database fore recent exposure
-
 
         TextView lblExposure = (TextView) findViewById(R.id.lblExposure);
         boolean wasExposed = false;
@@ -115,8 +120,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void PositiveResult(View view) {
-        //push to the database that you have a positive test result
 
+        /*
+         Close Contact Definition:
+
+         Someone who was within 6 feet of an infected person for a cumulative total of 15 minutes or
+         more over a 24-hour period* starting from 2 days before illness onset (or, for asymptomatic
+         patients, 2 days prior to test specimen collection) until the time the patient is isolated.
+
+         source: https://www.cdc.gov/coronavirus/2019-ncov/php/contact-tracing/contact-tracing-plan/appendix.html#contact
+        */
+
+        //todo: push to the database that you have a positive test result, query recent beacon hits and notify those users they may have been exposed
     }
 
 }
