@@ -105,6 +105,20 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void startMonitoring(View view) {
+
+        /* Start Listening */
+        TextView monitorBttn = findViewById(R.id.monitorBttn);
+        try {
+            Intent monitor = new Intent(this, MonitoringService.class);
+            startService(monitor);
+            monitorBttn.setText("Listening");
+        } catch (Exception e) {
+            monitorBttn.setText("Failed To Launch");
+            Log.println(Log.ERROR, TAG, e.toString());
+        }
+    }
+
     public void CheckExposure(View view) {
         //todo: check the database fore recent exposure
 

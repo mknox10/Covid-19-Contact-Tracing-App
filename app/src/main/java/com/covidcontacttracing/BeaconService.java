@@ -12,9 +12,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -23,11 +21,10 @@ import androidx.annotation.RequiresApi;
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.BeaconTransmitter;
-import org.altbeacon.beacon.Region;
 
 import java.util.Arrays;
 
-public class BeaconService<BluetoothHelper> extends Service {
+public class BeaconService extends Service {
 
     private static final String TAG = "BeaconService";
 
