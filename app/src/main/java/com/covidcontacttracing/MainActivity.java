@@ -23,6 +23,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        //todo: we may need to re-ask the user to accept these conditions when they re-launch the app if they declined them at first.
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -90,37 +93,48 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Starts the two services needed, the BeaconService for sending beacons and the Monitor service for listening for beacons.
+     *
+     * @param view
+     * @author mknox
+     */
     public void startBeacon(View view) {
 
-        /* Start the Beacon */
+        /* todo: both services will need to update functionality to allow services to be run once the app is closed. Currently
+                 it works while the app is open and if it is in the background but they stop once the app is closed entirely.
+            update: it seems the monitor service still works while it is closed. */
+
         TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
         try {
+            Intent monitor = new Intent(this, MonitorService.class);
+            startService(monitor);
             Intent beacon = new Intent(this, BeaconService.class);
             startService(beacon);
-            beaconBttn.setText("Broadcasting");
+
+            /** todo: Might have to change this here if making button a switch. **/
+            beaconBttn.setText("Tracking On");
         } catch (Exception e) {
-            beaconBttn.setText("Failed To Launch");
-            Log.println(Log.ERROR, TAG, e.toString());
+            Log.println(Log.ERROR, TAG, "Failed to start Beacons");
         }
 
     }
 
-    public void startMonitoring(View view) {
-
-        /* Start Listening */
-        TextView monitorBttn = findViewById(R.id.monitorBttn);
-        try {
-            Intent monitor = new Intent(this, MonitoringService.class);
-            startService(monitor);
-            monitorBttn.setText("Listening");
-        } catch (Exception e) {
-            monitorBttn.setText("Failed To Launch");
-            Log.println(Log.ERROR, TAG, e.toString());
-        }
-    }
-
+    /**
+     * Queries the database to find positive exposures from the past two days.
+     *
+     *      Close Contact Definition:
+     *
+     *          Someone who was within 6 feet of an infected person for a cumulative total of 15 minutes or
+     *          more over a 24-hour period* starting from 2 days before illness onset (or, for asymptomatic
+     *          patients, 2 days prior to test specimen collection) until the time the patient is isolated.
+     *
+     *          source: https://www.cdc.gov/coronavirus/2019-ncov/php/contact-tracing/contact-tracing-plan/appendix.html#contact
+     *
+     * @param view
+     * @author ???
+     */
     public void CheckExposure(View view) {
-        //todo: check the database fore recent exposure
 
         TextView lblExposure = (TextView) findViewById(R.id.lblExposure);
         boolean wasExposed = false;
@@ -133,19 +147,22 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Add a row to the positive result table with the time of first symptoms or positive test date (if asymptomatic).
+     *
+     *      Close Contact Definition:
+     *
+     *          Someone who was within 6 feet of an infected person for a cumulative total of 15 minutes or
+     *          more over a 24-hour period* starting from 2 days before illness onset (or, for asymptomatic
+     *          patients, 2 days prior to test specimen collection) until the time the patient is isolated.
+     *
+     *          source: https://www.cdc.gov/coronavirus/2019-ncov/php/contact-tracing/contact-tracing-plan/appendix.html#contact
+     *
+     * @param view
+     * @author ???
+     */
     public void PositiveResult(View view) {
 
-        /*
-         Close Contact Definition:
-
-         Someone who was within 6 feet of an infected person for a cumulative total of 15 minutes or
-         more over a 24-hour period* starting from 2 days before illness onset (or, for asymptomatic
-         patients, 2 days prior to test specimen collection) until the time the patient is isolated.
-
-         source: https://www.cdc.gov/coronavirus/2019-ncov/php/contact-tracing/contact-tracing-plan/appendix.html#contact
-        */
-
-        //todo: push to the database that you have a positive test result, query recent beacon hits and notify those users they may have been exposed
     }
 
 }
