@@ -3,11 +3,13 @@ package com.covidcontacttracing;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseSettings;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -33,28 +35,46 @@ public class BeaconService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate() {
-
-        // check if device is compatible
-        if (BeaconTransmitter.checkTransmissionSupported(getApplicationContext()) != BeaconTransmitter.SUPPORTED) {
-            Toast.makeText(this, "Incompatible Device", Toast.LENGTH_SHORT).show();
-            return; // maybe throw some type of exception here
-        }
-
-
-        //todo: might need to fix this stuff up, not sure.
+        // this message is really only needed for testing purposes
         Toast.makeText(this, "Broadcast Service Started!", Toast.LENGTH_SHORT).show();
+        super.onCreate();
+
         if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // stop the service
-                    // will this work? It will just prevent the thread from being created below? - Mitch
-                    return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && BeaconTransmitter.checkTransmissionSupported(getApplicationContext()) == BeaconTransmitter.SUPPORTED) {
+                if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    transmitBeacon();
+                } else {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Functionality limited");
+                    builder.setMessage("Since background location access has not been granted, this app will not be able to discover beacons in the background.  Please go to Settings -> Applications -> Permissions and grant background location access to this app.");
+                    builder.setPositiveButton(android.R.string.ok, null);
+                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                        }
+
+                    });
+                    builder.show();
                 }
+            } else {
+                Toast.makeText(this, "Incompatible Device", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, "Failed to Start Beacon Service: Incompatible Device");
             }
         } else {
-            return;
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Functionality limited");
+            builder.setMessage("Since location access has not been granted, this app will not be able to discover beacons.  Please go to Settings -> Applications -> Permissions and grant location access to this app.");
+            builder.setPositiveButton(android.R.string.ok, null);
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                }
+
+            });
+            builder.show();
         }
-        transmitBeacon();
     }
 
     @Override

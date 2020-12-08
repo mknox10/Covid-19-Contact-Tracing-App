@@ -1,15 +1,23 @@
 package com.covidcontacttracing;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Service;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
+
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconTransmitter;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
@@ -21,13 +29,50 @@ public class MonitorService extends Service implements BeaconConsumer {
     private static final String TAG = "Monitor Service";
     BeaconManager beaconManager;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onCreate() {
+        // this message is really only needed for testing purposes
         Toast.makeText(this, "Monitor Service Started!", Toast.LENGTH_SHORT).show();
         super.onCreate();
 
-        beaconManager = BeaconManager.getInstanceForApplication(this);
-        beaconManager.bind(this);
+        if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && BeaconTransmitter.checkTransmissionSupported(getApplicationContext()) == BeaconTransmitter.SUPPORTED) {
+                if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    beaconManager = BeaconManager.getInstanceForApplication(this);
+                    beaconManager.bind(this);
+                } else {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Functionality limited");
+                    builder.setMessage("Since background location access has not been granted, this app will not be able to discover beacons in the background.  Please go to Settings -> Applications -> Permissions and grant background location access to this app.");
+                    builder.setPositiveButton(android.R.string.ok, null);
+                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                        }
+
+                    });
+                    builder.show();
+                }
+            } else {
+                Toast.makeText(this, "Incompatible Device", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, "Failed to Start Beacon Service: Incompatible Device");
+            }
+        } else {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Functionality limited");
+            builder.setMessage("Since location access has not been granted, this app will not be able to discover beacons.  Please go to Settings -> Applications -> Permissions and grant location access to this app.");
+            builder.setPositiveButton(android.R.string.ok, null);
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                }
+
+            });
+            builder.show();
+        }
     }
 
     @Override
@@ -41,10 +86,10 @@ public class MonitorService extends Service implements BeaconConsumer {
         super.onDestroy();
         try {
             beaconManager.stopMonitoringBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+            Toast.makeText(this, "Monitoring Service Destroyed.", Toast.LENGTH_LONG).show();
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        Toast.makeText(this, "Monitoring Service Destroyed.", Toast.LENGTH_LONG).show();
     }
 
     /**
