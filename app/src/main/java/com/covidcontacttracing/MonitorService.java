@@ -28,6 +28,7 @@ public class MonitorService extends Service implements BeaconConsumer {
 
     private static final String TAG = "Monitor Service";
     BeaconManager beaconManager;
+    Region region;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -39,8 +40,11 @@ public class MonitorService extends Service implements BeaconConsumer {
         if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && BeaconTransmitter.checkTransmissionSupported(getApplicationContext()) == BeaconTransmitter.SUPPORTED) {
                 if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+                    region = new Region("myRangingUniqueId", null, null, null);
                     beaconManager = BeaconManager.getInstanceForApplication(this);
                     beaconManager.bind(this);
+
                 } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("Functionality limited");
@@ -85,7 +89,8 @@ public class MonitorService extends Service implements BeaconConsumer {
     public void onDestroy() {
         super.onDestroy();
         try {
-            beaconManager.stopMonitoringBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+            beaconManager.stopMonitoringBeaconsInRegion(region);
+            beaconManager.stopRangingBeaconsInRegion(region);
             Toast.makeText(this, "Monitoring Service Destroyed.", Toast.LENGTH_LONG).show();
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -120,9 +125,7 @@ public class MonitorService extends Service implements BeaconConsumer {
             }
         };
         try {
-            beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
-            beaconManager.addRangeNotifier(rangeNotifier);
-            beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+            beaconManager.startRangingBeaconsInRegion(region);
             beaconManager.addRangeNotifier(rangeNotifier);
         } catch (RemoteException e) {
             //todo: log some type of error message here
