@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
-
+    private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
 
     @Override
@@ -30,6 +30,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (savedInstanceState != null && savedInstanceState.getString(SCANNING_BUTTON).equals(String.valueOf(R.string.Stop_Scanning))) {
+            TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
+            beaconBttn.setText(getString(R.string.Stop_Scanning));
+        }
         requestPermissions();
     }
 
@@ -38,6 +42,29 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         requestPermissions();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopService(new Intent(this, MonitorService.class));
+        stopService(new Intent(this, BeaconService.class));
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
+        outState.putString(SCANNING_BUTTON, beaconBttn.getText().toString());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState.getString(SCANNING_BUTTON).equals(String.valueOf(R.string.Stop_Scanning))) {
+            TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
+            beaconBttn.setText(getString(R.string.Stop_Scanning));
+        }
     }
 
     /**
@@ -115,12 +142,8 @@ public class MainActivity extends AppCompatActivity {
      */
     public void startBeacon(View view) {
 
-        /* todo: both services will need to update functionality to allow services to be run once the app is closed. Currently
-                 it works while the app is open and if it is in the background but they stop once the app is closed entirely.
-            update: it seems the monitor service still works while it is closed. */
-
         TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
-        if (beaconBttn.getText().toString().equals("Start Scanning")) {
+        if (beaconBttn.getText().toString().equals(getString(R.string.Start_Scanning))) {
             try {
                 startService(new Intent(this, MonitorService.class));
                 startService(new Intent(this, BeaconService.class));

@@ -33,8 +33,6 @@ public class MonitorService extends Service implements BeaconConsumer {
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onCreate() {
-        // this message is really only needed for testing purposes
-        Toast.makeText(this, "Monitor Service Started!", Toast.LENGTH_SHORT).show();
         super.onCreate();
 
         if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -91,7 +89,6 @@ public class MonitorService extends Service implements BeaconConsumer {
         try {
             beaconManager.stopMonitoringBeaconsInRegion(region);
             beaconManager.stopRangingBeaconsInRegion(region);
-            Toast.makeText(this, "Monitoring Service Destroyed.", Toast.LENGTH_LONG).show();
         } catch (RemoteException e) {
             e.printStackTrace();
         }

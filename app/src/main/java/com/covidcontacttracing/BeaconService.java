@@ -35,8 +35,6 @@ public class BeaconService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate() {
-        // this message is really only needed for testing purposes
-        Toast.makeText(this, "Broadcast Service Started!", Toast.LENGTH_SHORT).show();
         super.onCreate();
 
         if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -81,7 +79,6 @@ public class BeaconService extends Service {
     public void onDestroy() {
         super.onDestroy();
         beaconTransmitter.stopAdvertising();
-        Toast.makeText(this, "Broadcast Service Destroyed.", Toast.LENGTH_LONG).show();
     }
 
 //    @RequiresApi(api = Build.VERSION_CODES.O)
