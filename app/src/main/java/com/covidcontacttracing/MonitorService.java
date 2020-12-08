@@ -36,6 +36,17 @@ public class MonitorService extends Service implements BeaconConsumer {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        try {
+            beaconManager.stopMonitoringBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(this, "Monitoring Service Destroyed.", Toast.LENGTH_LONG).show();
+    }
+
     /**
      * Starts monitoring for beacon signals from other devices. It is called after implementation of the beaconManger.
      *

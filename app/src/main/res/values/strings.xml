@@ -2,4 +2,6 @@
     <string name="app_name">CovidContactTracing</string>
     <string name="you_have_not_been_exposed">You have not been exposed</string>
     <string name="ndsu_covid_19_contact_tracing">NDSU COVID-19 Contact Tracing</string>
+    <string name="Start_Scanning">Start Scanning</string>
+    <string name="Stop_Scanning">Stop Scanning</string>
 </resources>

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -106,16 +108,18 @@ public class MainActivity extends AppCompatActivity {
             update: it seems the monitor service still works while it is closed. */
 
         TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
-        try {
-            Intent monitor = new Intent(this, MonitorService.class);
-            startService(monitor);
-            Intent beacon = new Intent(this, BeaconService.class);
-            startService(beacon);
-
-            /** todo: Might have to change this here if making button a switch. **/
-            beaconBttn.setText("Tracking On");
-        } catch (Exception e) {
-            Log.println(Log.ERROR, TAG, "Failed to start Beacons");
+        if (beaconBttn.getText().toString().equals("Start Scanning")) {
+            try {
+                startService(new Intent(this, MonitorService.class));
+                startService(new Intent(this, BeaconService.class));
+                beaconBttn.setText(getString(R.string.Stop_Scanning));
+            } catch (Exception e) {
+                Log.println(Log.ERROR, TAG, "Failed to start Beacons");
+            }
+        } else {
+            stopService(new Intent(this, MonitorService.class));
+            stopService(new Intent(this, BeaconService.class));
+            beaconBttn.setText(getString(R.string.Start_Scanning));
         }
 
     }

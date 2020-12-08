@@ -28,6 +28,8 @@ public class BeaconService extends Service {
 
     private static final String TAG = "BeaconService";
 
+    BeaconTransmitter beaconTransmitter;
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate() {
@@ -53,6 +55,13 @@ public class BeaconService extends Service {
             return;
         }
         transmitBeacon();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        beaconTransmitter.stopAdvertising();
+        Toast.makeText(this, "Broadcast Service Destroyed.", Toast.LENGTH_LONG).show();
     }
 
 //    @RequiresApi(api = Build.VERSION_CODES.O)
@@ -114,7 +123,7 @@ public class BeaconService extends Service {
                 .setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"); // altbeacon format
 
         // If you are using an emulator the app will crash at this point
-        BeaconTransmitter beaconTransmitter = new BeaconTransmitter(getApplicationContext(), beaconParser);
+        beaconTransmitter = new BeaconTransmitter(getApplicationContext(), beaconParser);
         beaconTransmitter.startAdvertising(beacon, new AdvertiseCallback() {
 
             @Override
