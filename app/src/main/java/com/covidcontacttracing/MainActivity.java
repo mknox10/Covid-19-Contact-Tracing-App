@@ -2,12 +2,10 @@ package com.covidcontacttracing;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,9 +14,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
+
+    boolean PositiveTest = false;
+    boolean wasExposed = false;
+
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
@@ -35,7 +36,30 @@ public class MainActivity extends AppCompatActivity {
             beaconBttn.setText(getString(R.string.Stop_Scanning));
         }
         requestPermissions();
+
+        updateState();
     }
+
+
+    public void updateState(){
+        //call database to update info
+
+       // Query query = FirebaseDatabase.getInstance().getRefrence("");
+
+
+
+
+//        if(querycall.my(id) exist ){
+//            PositiveTest = true;//call database
+//        }else{
+//            PositiveTest = false;//call database
+//        }
+
+       // wasExposed = false;//call database
+    }
+
+
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -175,8 +199,12 @@ public class MainActivity extends AppCompatActivity {
      */
     public void CheckExposure(View view) {
 
-        TextView lblExposure = (TextView) findViewById(R.id.lblExposure);
-        boolean wasExposed = false;
+        TextView lblExposure = (TextView) findViewById(R.id.exposureText);
+        wasExposed = false;
+
+        //need to insert call to the database to check if you have been exposed
+
+
 
         if (wasExposed) {
             lblExposure.setText("You have been exposed please check CDC guiedlines on how to quarantine ");
@@ -200,7 +228,24 @@ public class MainActivity extends AppCompatActivity {
      * @param view
      * @author ???
      */
+
+
+
     public void PositiveResult(View view) {
+
+        TextView lblPositiveTest = (TextView) findViewById(R.id.PositiveResultText);
+        PositiveTest = true;
+
+        //need to insert call to the database to send exposure update
+
+
+
+        if (!PositiveTest) {
+            lblPositiveTest.setText(" Click the Positive test button if you have received a positive test result \nYou have not reported a positive test result");
+        } else{
+            lblPositiveTest.setText("You have reported a positive result please follow quarantine guidelines");
+        }
+
 
     }
 
