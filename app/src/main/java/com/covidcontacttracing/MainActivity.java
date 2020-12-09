@@ -17,8 +17,11 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
+    //save all this to local storage;
     boolean PositiveTest = false;
     boolean wasExposed = false;
+    int uuID;
+    string[] contactList;
 
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
@@ -38,6 +41,12 @@ public class MainActivity extends AppCompatActivity {
         requestPermissions();
 
         updateState();
+
+
+        if(! null){
+            //check if uuid is in local storage
+            //generate uuid uuid =
+        }
     }
 
 
@@ -56,6 +65,12 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
        // wasExposed = false;//call database
+
+//         PositiveTest = false;
+//         wasExposed = false;
+//         uuID;
+//        string[] contactList;
+
     }
 
 
