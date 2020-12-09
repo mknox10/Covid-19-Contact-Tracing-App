@@ -17,17 +17,22 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.UUID;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.UUID;
-
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,13 +40,27 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
     private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
+    private static final String SAVE_FILE = "userData";
     private final String FIREBASE_URL = "https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/";
+
+
+    // Setup for data file
+    File dataFile = new File(this.getFilesDir(), SAVE_FILE);
+    JSONObject json;
+    FileReader fr = null;
+    FileWriter fw = null;
+    BufferedReader br = null;
+    BufferedWriter bw = null;
 
     //save all this to local storage;
     boolean PositiveTest = false;
     boolean wasExposed = false;
-    String uniqueID;
+    String uuID;
+    ArrayList<String> contactList = new ArrayList<String>();
+
+
     String testID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,21 +73,67 @@ public class MainActivity extends AppCompatActivity {
         }
         requestPermissions();
 
+        if(!dataFile.exists()) {
+            try {
+                dataFile.createNewFile();
+                fw = new FileWriter(dataFile.getAbsoluteFile());
+                bw = new BufferedWriter(fw);
+                json = new JSONObject();
+
+                uuID = UUID.randomUUID().toString();
+
+                json.put("UUID", uuID);
+                json.put("positive", PositiveTest);
+                json.put("exposed", wasExposed);
+                json.put("contacts", new JSONArray(contactList));
+
+                bw.write(json.toString());
+                bw.close();
+                fw.close();
+
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                fr = new FileReader(dataFile.getAbsoluteFile());
+                br = new BufferedReader(fr);
+                StringBuffer sb = new StringBuffer();
+
+                String curr = "";
+                while ((curr = br.readLine()) != null) {
+                    sb.append(curr + '\n');
+                }
+                String fileContent = sb.toString();
+
+                br.close();
+                fr.close();
+
+                json = new JSONObject(fileContent);
+
+                uuID = json.getString("UUID");
+                PositiveTest = json.getBoolean("positive");
+                wasExposed = json.getBoolean("exposed");
+
+                ArrayList<String> temp = new ArrayList<String>();
+                JSONArray jArray = json.getJSONArray("contacts");
+                for (int i = 0; i < jArray.length(); i++){
+                    temp.add(jArray.getString(i));
+                }
+
+                contactList = temp;
+
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
         // Allows us to make HTTP Requests
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
-
-        uniqueID = UUID.randomUUID().toString();
-        //testID = UUID.randomUUID().toString();
         Log.println(Log.INFO, "TEST-ID", testID);
         updateState();
-
-
-       // if(! null){
-            //check if uuid is in local storage
-            //generate uuid uuid =
-       // }
     }
 
     
@@ -278,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
 
         //need to insert call to the database to send exposure update
         try {
-            addPositiveCase(uniqueID);
+            addPositiveCase(uuID);
         } catch (IOException e) {
             Log.println(Log.ERROR, TAG, "Couldn't add it.");
         }
