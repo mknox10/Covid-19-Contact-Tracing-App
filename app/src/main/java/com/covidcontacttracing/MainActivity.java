@@ -17,17 +17,22 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.UUID;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.UUID;
-
 
 import java.util.UUID;
 
@@ -36,14 +41,24 @@ public class MainActivity extends AppCompatActivity {
     private final String FIREBASE_URL = "https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/";
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
+    private static final String SAVE_FILE = "userData";
     private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
     private static final String TEST_ID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
 
+    // Setup for data file
+    File dataFile = new File(this.getFilesDir(), SAVE_FILE);
+    JSONObject json;
+    FileReader fr = null;
+    FileWriter fw = null;
+    BufferedReader br = null;
+    BufferedWriter bw = null;
+
     //save all this to local storage;
     private boolean PositiveTest = false;
     private boolean wasExposed = false;
-    private String uuid = "";
+    private String uuID = "";
+    ArrayList<String> contactList = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,38 +75,65 @@ public class MainActivity extends AppCompatActivity {
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        //todo: get from storage
-        uuid = TEST_ID;
-
         updateState();
         requestPermissions();
-
-        if(uuid.isEmpty()){
-            uuid = UUID.randomUUID().toString();
-        }
     }
 
     public void updateState(){
-        //call database to update info
+        if(!dataFile.exists()) {
+            try {
+                dataFile.createNewFile();
+                fw = new FileWriter(dataFile.getAbsoluteFile());
+                bw = new BufferedWriter(fw);
+                json = new JSONObject();
 
-       // CHECK database against interaction list
+                uuID= UUID.randomUUID().toString();
 
+                json.put("UUID", uuID);
+                json.put("positive", PositiveTest);
+                json.put("exposed", wasExposed);
+                json.put("contacts", new JSONArray(contactList));
 
+                bw.write(json.toString());
+                bw.close();
+                fw.close();
 
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                fr = new FileReader(dataFile.getAbsoluteFile());
+                br = new BufferedReader(fr);
+                StringBuffer sb = new StringBuffer();
 
-//        if(querycall.my(id) exist ){
-//            PositiveTest = true;//call database
-//        }else{
-//            PositiveTest = false;//call database
-//        }
+                String curr = "";
+                while ((curr = br.readLine()) != null) {
+                    sb.append(curr + '\n');
+                }
+                String fileContent = sb.toString();
 
-       // wasExposed = false;//call database
+                br.close();
+                fr.close();
 
-//         PositiveTest = false;
-//         wasExposed = false;
-//         uuID;
-//        string[] contactList;
+                json = new JSONObject(fileContent);
 
+                uuID = json.getString("UUID");
+                PositiveTest = json.getBoolean("positive");
+                wasExposed = json.getBoolean("exposed");
+
+                ArrayList<String> temp = new ArrayList<String>();
+                JSONArray jArray = json.getJSONArray("contacts");
+                for (int i = 0; i < jArray.length(); i++){
+                    temp.add(jArray.getString(i));
+                }
+
+                contactList = temp;
+
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -237,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
 
         //need to insert call to the database to check if you have been exposed
         try {
-            wasExposed = checkContact(uuid);
+            wasExposed = checkContact(uuID);
         }catch(IOException e){
             Log.println(Log.ERROR, TAG, e.getMessage());
         }catch(JSONException e){
@@ -271,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
 
         //need to insert call to the database to send exposure update
         try {
-            addPositiveCase(uuid);
+            addPositiveCase(uuID);
         } catch (IOException e) {
             Log.println(Log.ERROR, TAG, "Couldn't add it.");
         }
@@ -281,8 +323,6 @@ public class MainActivity extends AppCompatActivity {
         } else{
             lblPositiveTest.setText("You have reported a positive result please follow quarantine guidelines");
         }
-
-
     }
 
 
