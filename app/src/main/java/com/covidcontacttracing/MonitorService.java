@@ -20,13 +20,27 @@ import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconTransmitter;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.UUID;
 
 public class MonitorService extends Service implements BeaconConsumer {
 
+    private static final String SAVE_FILE = "userData";
     private static final String TAG = "Monitor Service";
+
     BeaconManager beaconManager;
     Region region;
 
@@ -102,7 +116,7 @@ public class MonitorService extends Service implements BeaconConsumer {
     @Override
     public void onBeaconServiceConnect() {
 
-        Toast.makeText(this, "Device has started Monitoring for other Devices.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Device has started monitoring for other devices.", Toast.LENGTH_SHORT).show();
 
         RangeNotifier rangeNotifier = new RangeNotifier() {
             @Override
@@ -132,18 +146,80 @@ public class MonitorService extends Service implements BeaconConsumer {
     /**
      * Saves a new row to the interaction table with the id's of each device and the interaction timestamp.
      *
-     * @author ???
-     * @param uuid the device id received from the in range beacon
+     * @param interactionID the device id received from the in range beacon
+     * @author mknx
      */
-    private void beaconInteraction(String uuid) {
+    private void beaconInteraction(String interactionID) {
 
-        String message = "Saving interaction with device id: " + uuid;
+        String message = String.format("Saving interaction with device id: %s", interactionID);
 
         Log.i(TAG, message);
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
 
-        //todo: save interaction to database
+        FileWriter fw;
+        BufferedReader br;
+        BufferedWriter bw;
+        JSONObject json;
+        String uuID = "";
+        boolean PositiveTest = false;
+        boolean wasExposed = false;
+        ArrayList<String> contactList = new ArrayList<String>();
 
+        File dataFile = new File(this.getFilesDir(), SAVE_FILE);
+
+
+        /** Read from the file. **/
+        try {
+            FileReader fr = new FileReader(dataFile.getAbsoluteFile());
+            br = new BufferedReader(fr);
+            StringBuffer sb = new StringBuffer();
+
+            String curr = "";
+            while ((curr = br.readLine()) != null) {
+                sb.append(curr + '\n');
+            }
+            String fileContent = sb.toString();
+
+            br.close();
+            fr.close();
+
+            json = new JSONObject(fileContent);
+
+            uuID = json.getString("UUID");
+            PositiveTest = json.getBoolean("positive");
+            wasExposed = json.getBoolean("exposed");
+
+            JSONArray jArray = json.getJSONArray("contacts");
+            for (int i = 0; i < jArray.length(); i++) {
+                contactList.add(jArray.getString(i));
+            }
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+
+        /** Add this interaction to file **/
+        contactList.add(interactionID);
+
+        /** Save to file. **/
+        try {
+            dataFile.createNewFile();
+            fw = new FileWriter(dataFile.getAbsoluteFile());
+            bw = new BufferedWriter(fw);
+            json = new JSONObject();
+
+            uuID= UUID.randomUUID().toString();
+
+            json.put("UUID", uuID);
+            json.put("positive", PositiveTest);
+            json.put("exposed", wasExposed);
+            json.put("contacts", new JSONArray(contactList));
+
+            bw.write(json.toString());
+            bw.close();
+            fw.close();
+
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
     }
-
 }

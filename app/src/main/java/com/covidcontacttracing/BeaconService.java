@@ -98,7 +98,7 @@ public class BeaconService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void transmitBeacon() {
 
-        Toast.makeText(this, "Device has started Broadcasting.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Device has started broadcasting to other devices.", Toast.LENGTH_SHORT).show();
         Toast.makeText(this, "UUID: ." + uuid, Toast.LENGTH_SHORT).show();
 
         Beacon beacon = new Beacon.Builder()
