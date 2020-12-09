@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
     boolean PositiveTest = false;
     boolean wasExposed = false;
     int uuID;
-    string[] contactList;
+    //string[] contactList;
 
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
@@ -43,11 +43,13 @@ public class MainActivity extends AppCompatActivity {
         updateState();
 
 
-        if(! null){
+       // if(! null){
             //check if uuid is in local storage
             //generate uuid uuid =
-        }
+       // }
     }
+
+    
 
 
     public void updateState(){
