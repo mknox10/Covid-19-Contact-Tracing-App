@@ -29,19 +29,22 @@ import java.net.URL;
 import java.util.UUID;
 
 
+import java.util.UUID;
+
 public class MainActivity extends AppCompatActivity {
 
+    private final String FIREBASE_URL = "https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/";
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
     private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
-    private final String FIREBASE_URL = "https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/";
 
     //save all this to local storage;
-    boolean PositiveTest = false;
-    boolean wasExposed = false;
-    String uniqueID;
-    String testID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
+    private boolean PositiveTest = false;
+    private boolean wasExposed = false;
+    private String uuid = "";
+
+    private String testID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,20 +62,13 @@ public class MainActivity extends AppCompatActivity {
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        uniqueID = UUID.randomUUID().toString();
-        //testID = UUID.randomUUID().toString();
         Log.println(Log.INFO, "TEST-ID", testID);
         updateState();
 
-
-       // if(! null){
-            //check if uuid is in local storage
-            //generate uuid uuid =
-       // }
+        if(uuid.isEmpty()){
+            uuid = UUID.randomUUID().toString();
+        }
     }
-
-    
-
 
     public void updateState(){
         //call database to update info
@@ -96,9 +92,6 @@ public class MainActivity extends AppCompatActivity {
 //        string[] contactList;
 
     }
-
-
-
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -269,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
      *          source: https://www.cdc.gov/coronavirus/2019-ncov/php/contact-tracing/contact-tracing-plan/appendix.html#contact
      *
      * @param view
-     * @author ???
+     * @author Brett J
      */
     public void PositiveResult(View view) {
 
@@ -278,11 +271,10 @@ public class MainActivity extends AppCompatActivity {
 
         //need to insert call to the database to send exposure update
         try {
-            addPositiveCase(uniqueID);
+            addPositiveCase(uuid);
         } catch (IOException e) {
             Log.println(Log.ERROR, TAG, "Couldn't add it.");
         }
-
 
         if (!PositiveTest) {
             lblPositiveTest.setText(" Click the Positive test button if you have received a positive test result \nYou have not reported a positive test result");
@@ -293,6 +285,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+    /**
+     *
+     * @param urlToRead
+     * @return
+     * @throws IOException
+     * @author Brett J
+     */
     public static String makeRequestGET(String urlToRead) throws IOException {
         StringBuilder result = new StringBuilder();
         URL url = new URL(urlToRead);
@@ -335,8 +335,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public boolean addPositiveCase(String id) throws IOException {
-        //"{\"id\": \""+id+"\"}"
-        boolean response = makeRequestPATCH(FIREBASE_URL+"positive_cases.json", "{\""+id+"\": true}");
+        // "{\"id\": \""+id+"\"}"
+        boolean response = makeRequestPATCH(FIREBASE_URL + "positive_cases.json", "{\""+id+"\": true}");
         if(response){
             Log.println(Log.ERROR, "OUTPUT", "Added positive case successfully.");
         }

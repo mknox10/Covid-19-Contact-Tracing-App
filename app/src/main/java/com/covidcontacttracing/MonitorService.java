@@ -110,12 +110,9 @@ public class MonitorService extends Service implements BeaconConsumer {
                     while (itr.hasNext()) {
                         Beacon beacon = itr.next();
                         /** check distance between 5.0 meters for testing purposes. **/
-                        if (beacon.getDistance() < 5.0) {
-                            Log.d(TAG, "Beacon within 5.0 meters");
-                        }
                         if (beacon.getDistance() < 2.0) {
                             Log.d(TAG, "Beacon within 2.0 meters");
-                            beaconInteraction(beacon);
+                            beaconInteraction(beacon.getId2().toString());
                         }
                     }
                 }
@@ -134,13 +131,14 @@ public class MonitorService extends Service implements BeaconConsumer {
      * Saves a new row to the interaction table with the id's of each device and the interaction timestamp.
      *
      * @author ???
-     * @param beacon
+     * @param uuid the device id received from the in range beacon
      */
-    private void beaconInteraction(Beacon beacon) {
+    private void beaconInteraction(String uuid) {
 
-        // test case - print interaction to screen. Remove this when finished.
-        Log.i(TAG, "The beacon " + beacon.toString() + " is about " + beacon.getDistance() + " meters away.");
-        Toast.makeText(this, "The beacon " + beacon.toString() + " is about " + beacon.getDistance() + " meters away.", Toast.LENGTH_SHORT).show();
+        String message = "Saving interaction with device id:" + uuid;
+
+        Log.i(TAG, message);
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
 
         //todo: save interaction to database
 

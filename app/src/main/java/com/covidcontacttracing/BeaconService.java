@@ -4,8 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.Service;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseSettings;
@@ -29,13 +27,18 @@ import java.util.Arrays;
 public class BeaconService extends Service {
 
     private static final String TAG = "BeaconService";
+    private static final String TEST_ID = "278581fa-48c4-4525-8e13-7dcd21999c8d";
 
-    BeaconTransmitter beaconTransmitter;
+    private String uuid;
+    private BeaconTransmitter beaconTransmitter;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate() {
         super.onCreate();
+
+        //todo: get uuid
+        uuid = TEST_ID;
 
         if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && BeaconTransmitter.checkTransmissionSupported(getApplicationContext()) == BeaconTransmitter.SUPPORTED) {
@@ -81,36 +84,6 @@ public class BeaconService extends Service {
         beaconTransmitter.stopAdvertising();
     }
 
-//    @RequiresApi(api = Build.VERSION_CODES.O)
-//    private void createNotificationChannel() {
-//        CharSequence name = "chName";
-//        String description = "chDescription";
-//        int importance = NotificationManager.IMPORTANCE_DEFAULT;
-//        NotificationChannel channel = new NotificationChannel("chMe", name, importance);
-//        channel.setDescription(description);
-//        // Register the channel with the system; you can't change the importance
-//        // or other notification behaviors after this
-//        NotificationManager notificationManager = getSystemService(NotificationManager.class);
-//        notificationManager.createNotificationChannel(channel);
-//    }
-//
-//    @Override
-//    public int onStartCommand(Intent intent, int flags, int startId) {
-//        /*Bundle extras = intent.getExtras();
-//        Intent data = (Intent) extras.get("data");
-//        displaySize = (Point) extras.get("size");
-//        dpi = extras.getInt("dpi");
-//        imageReader = ImageReader.newInstance(displaySize.x, displaySize.y, PixelFormat.RGBA_8888, 2);
-//        mediaProjection = mediaManager.getMediaProjection(-1, data);
-//        virtualDisplay = mediaProjection.createVirtualDisplay("service", displaySize.x,
-//                displaySize.y, dpi,
-//                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader.getSurface(),
-//                null, null);
-//        serverThread.start();*/
-////        beaconThread.start();
-//        return START_STICKY;
-//    }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -125,19 +98,16 @@ public class BeaconService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void transmitBeacon() {
 
-        //todo: rework this so it can transmit in the background. https://altbeacon.github.io/android-beacon-library/beacon-transmitter.html
-
         Beacon beacon = new Beacon.Builder()
                 .setId1("2f234454-cf6d-4a0f-adf2-f4911ba9ffa6") // Not a clue what this means - https://altbeacon.github.io/android-beacon-library/beacon-transmitter.html
-                .setId2("1")
-                .setId3("2")
+                .setId2(uuid)
+                .setId3("3")
                 .setManufacturer(0x0118)
                 .setTxPower(-59)
                 .setDataFields(Arrays.asList(new Long[]{0l})) // Remove this for beacon layouts without d: fields
                 .build();
 
-        BeaconParser beaconParser = new BeaconParser()
-                .setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"); // altbeacon format
+        BeaconParser beaconParser = new BeaconParser().setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"); // altbeacon format
 
         // If you are using an emulator the app will crash at this point
         beaconTransmitter = new BeaconTransmitter(getApplicationContext(), beaconParser);
