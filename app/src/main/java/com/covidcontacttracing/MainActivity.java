@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Setup for data file
     File dataFile = new File(this.getFilesDir(), SAVE_FILE);
-    JSONObject json = new JSONObject();
+    JSONObject json;
     FileReader fr = null;
     FileWriter fw = null;
     BufferedReader br = null;
@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
                 dataFile.createNewFile();
                 fw = new FileWriter(dataFile.getAbsoluteFile());
                 bw = new BufferedWriter(fw);
+                json = new JSONObject();
 
                 uuID = UUID.randomUUID().toString();
 
@@ -89,6 +90,38 @@ public class MainActivity extends AppCompatActivity {
                 bw.write(json.toString());
                 bw.close();
                 fw.close();
+
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                fr = new FileReader(dataFile.getAbsoluteFile());
+                br = new BufferedReader(fr);
+                StringBuffer sb = new StringBuffer();
+
+                String curr = "";
+                while ((curr = br.readLine()) != null) {
+                    sb.append(curr + '\n');
+                }
+                String fileContent = sb.toString();
+
+                br.close();
+                fr.close();
+
+                json = new JSONObject(fileContent);
+
+                uuID = json.getString("UUID");
+                PositiveTest = json.getBoolean("positive");
+                wasExposed = json.getBoolean("exposed");
+
+                ArrayList<String> temp = new ArrayList<String>();
+                JSONArray jArray = json.getJSONArray("contacts");
+                for (int i = 0; i < jArray.length(); i++){
+                    temp.add(jArray.getString(i));
+                }
+
+                contactList = temp;
 
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
