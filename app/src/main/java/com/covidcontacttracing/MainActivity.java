@@ -31,18 +31,17 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    boolean PositiveTest = false;
-    boolean wasExposed = false;
-    String uniqueID;
-    String testID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
-    String[] interactionList;
-
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
     private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
-
     private final String FIREBASE_URL = "https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/";
+
+    //save all this to local storage;
+    boolean PositiveTest = false;
+    boolean wasExposed = false;
+    String uniqueID;
+    String testID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +63,15 @@ public class MainActivity extends AppCompatActivity {
         //testID = UUID.randomUUID().toString();
         Log.println(Log.INFO, "TEST-ID", testID);
         updateState();
+
+
+       // if(! null){
+            //check if uuid is in local storage
+            //generate uuid uuid =
+       // }
     }
+
+    
 
 
     public void updateState(){
@@ -82,6 +89,12 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
        // wasExposed = false;//call database
+
+//         PositiveTest = false;
+//         wasExposed = false;
+//         uuID;
+//        string[] contactList;
+
     }
 
 
