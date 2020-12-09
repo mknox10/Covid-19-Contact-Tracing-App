@@ -38,13 +38,12 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
     private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
+    private static final String TEST_ID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
 
     //save all this to local storage;
     private boolean PositiveTest = false;
     private boolean wasExposed = false;
     private String uuid = "";
-
-    private String testID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,15 +54,17 @@ public class MainActivity extends AppCompatActivity {
             TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
             beaconBttn.setText(getString(R.string.Stop_Scanning));
         }
-        requestPermissions();
 
         // Allows us to make HTTP Requests
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        Log.println(Log.INFO, "TEST-ID", testID);
+        //todo: get from storage
+        uuid = TEST_ID;
+
         updateState();
+        requestPermissions();
 
         if(uuid.isEmpty()){
             uuid = UUID.randomUUID().toString();
@@ -236,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
 
         //need to insert call to the database to check if you have been exposed
         try {
-            wasExposed = checkContact(testID);
+            wasExposed = checkContact(uuid);
         }catch(IOException e){
             Log.println(Log.ERROR, TAG, e.getMessage());
         }catch(JSONException e){
@@ -247,7 +248,6 @@ public class MainActivity extends AppCompatActivity {
         } else{
             lblExposure.setText("You have not been exposed");
         }
-
     }
 
     /**
@@ -287,7 +287,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     *
      * @param urlToRead
      * @return
      * @throws IOException
@@ -307,6 +306,13 @@ public class MainActivity extends AppCompatActivity {
         return result.toString();
     }
 
+    /**
+     * @param urlToRead
+     * @param data
+     * @return
+     * @throws IOException
+     * @author Brett J
+     */
     public static boolean makeRequestPATCH(String urlToRead, String data) throws IOException {
         URL url = new URL(urlToRead);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -322,10 +328,18 @@ public class MainActivity extends AppCompatActivity {
         return code == 200;
     }
 
-    public static JSONObject convertString(String data) throws JSONException {
+
+    private static JSONObject convertString(String data) throws JSONException {
         return new JSONObject(data);
     }
 
+    /**
+     * @param id
+     * @return
+     * @throws IOException
+     * @throws JSONException
+     * @author Brett J
+     */
     public boolean checkContact(String id) throws IOException, JSONException {
         String url = FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"';
         String response = makeRequestGET(FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"');
@@ -334,6 +348,12 @@ public class MainActivity extends AppCompatActivity {
         return object.length() != 0;
     }
 
+    /**
+     * @param id
+     * @return
+     * @throws IOException
+     * @author Brett J
+     */
     public boolean addPositiveCase(String id) throws IOException {
         // "{\"id\": \""+id+"\"}"
         boolean response = makeRequestPATCH(FIREBASE_URL + "positive_cases.json", "{\""+id+"\": true}");

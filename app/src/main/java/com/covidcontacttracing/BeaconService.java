@@ -98,6 +98,9 @@ public class BeaconService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void transmitBeacon() {
 
+        Toast.makeText(this, "Device has started Broadcasting.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "UUID: ." + uuid, Toast.LENGTH_SHORT).show();
+
         Beacon beacon = new Beacon.Builder()
                 .setId1("2f234454-cf6d-4a0f-adf2-f4911ba9ffa6") // Not a clue what this means - https://altbeacon.github.io/android-beacon-library/beacon-transmitter.html
                 .setId2(uuid)
@@ -122,7 +125,6 @@ public class BeaconService extends Service {
             public void onStartSuccess(AdvertiseSettings settingsInEffect) {
                 Log.i(TAG, "Advertisement start succeeded.");
             }
-
         });
     }
 }

@@ -102,6 +102,8 @@ public class MonitorService extends Service implements BeaconConsumer {
     @Override
     public void onBeaconServiceConnect() {
 
+        Toast.makeText(this, "Device has started Monitoring for other Devices.", Toast.LENGTH_SHORT).show();
+
         RangeNotifier rangeNotifier = new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
@@ -109,9 +111,9 @@ public class MonitorService extends Service implements BeaconConsumer {
                     Iterator<Beacon> itr = beacons.iterator();
                     while (itr.hasNext()) {
                         Beacon beacon = itr.next();
-                        /** check distance between 5.0 meters for testing purposes. **/
                         if (beacon.getDistance() < 2.0) {
                             Log.d(TAG, "Beacon within 2.0 meters");
+                            //todo: this might be broken
                             beaconInteraction(beacon.getId2().toString());
                         }
                     }
@@ -135,7 +137,7 @@ public class MonitorService extends Service implements BeaconConsumer {
      */
     private void beaconInteraction(String uuid) {
 
-        String message = "Saving interaction with device id:" + uuid;
+        String message = "Saving interaction with device id: " + uuid;
 
         Log.i(TAG, message);
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
