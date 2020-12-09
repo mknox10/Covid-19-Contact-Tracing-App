@@ -11,20 +11,38 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.UUID;
+
 
 public class MainActivity extends AppCompatActivity {
 
     boolean PositiveTest = false;
     boolean wasExposed = false;
-
+    String uniqueID;
+    String testID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
+    String[] interactionList;
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
     private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
+
+    private final String FIREBASE_URL = "https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +55,14 @@ public class MainActivity extends AppCompatActivity {
         }
         requestPermissions();
 
+        // Allows us to make HTTP Requests
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                .permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        uniqueID = UUID.randomUUID().toString();
+        //testID = UUID.randomUUID().toString();
+        Log.println(Log.INFO, "TEST-ID", testID);
         updateState();
     }
 
@@ -44,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     public void updateState(){
         //call database to update info
 
-       // Query query = FirebaseDatabase.getInstance().getRefrence("");
+       // CHECK database against interaction list
 
 
 
@@ -203,11 +229,15 @@ public class MainActivity extends AppCompatActivity {
         wasExposed = false;
 
         //need to insert call to the database to check if you have been exposed
-
-
-
+        try {
+            wasExposed = checkContact(testID);
+        }catch(IOException e){
+            Log.println(Log.ERROR, TAG, e.getMessage());
+        }catch(JSONException e){
+            Log.println(Log.ERROR, TAG, "Invalid JSON.");
+        }
         if (wasExposed) {
-            lblExposure.setText("You have been exposed please check CDC guiedlines on how to quarantine ");
+            lblExposure.setText("You have been exposed please check CDC guidelines on how to quarantine ");
         } else{
             lblExposure.setText("You have not been exposed");
         }
@@ -228,16 +258,17 @@ public class MainActivity extends AppCompatActivity {
      * @param view
      * @author ???
      */
-
-
-
     public void PositiveResult(View view) {
 
         TextView lblPositiveTest = (TextView) findViewById(R.id.PositiveResultText);
         PositiveTest = true;
 
         //need to insert call to the database to send exposure update
-
+        try {
+            addPositiveCase(uniqueID);
+        } catch (IOException e) {
+            Log.println(Log.ERROR, TAG, "Couldn't add it.");
+        }
 
 
         if (!PositiveTest) {
@@ -249,4 +280,53 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public static String makeRequestGET(String urlToRead) throws IOException {
+        StringBuilder result = new StringBuilder();
+        URL url = new URL(urlToRead);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        String line;
+        while ((line = rd.readLine()) != null) {
+            result.append(line);
+        }
+        rd.close();
+        return result.toString();
+    }
+
+    public static boolean makeRequestPATCH(String urlToRead, String data) throws IOException {
+        URL url = new URL(urlToRead);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("PATCH");
+        conn.setRequestProperty("Content-Type", "application/json; utf-8");
+        conn.setRequestProperty("Accept", "application/json");
+        conn.setDoOutput(true);
+        try(OutputStream os = conn.getOutputStream()) {
+            byte[] input = data.getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+        int code = conn.getResponseCode();
+        return code == 200;
+    }
+
+    public static JSONObject convertString(String data) throws JSONException {
+        return new JSONObject(data);
+    }
+
+    public boolean checkContact(String id) throws IOException, JSONException {
+        String url = FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"';
+        String response = makeRequestGET(FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"');
+        Log.println(Log.ERROR, "OUTPUT", url+"\n"+response);
+        JSONObject object = convertString(response);
+        return object.length() != 0;
+    }
+
+    public boolean addPositiveCase(String id) throws IOException {
+        //"{\"id\": \""+id+"\"}"
+        boolean response = makeRequestPATCH(FIREBASE_URL+"positive_cases.json", "{\""+id+"\": true}");
+        if(response){
+            Log.println(Log.ERROR, "OUTPUT", "Added positive case successfully.");
+        }
+        return response;
+    }
 }
