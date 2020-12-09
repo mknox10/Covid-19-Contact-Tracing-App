@@ -15,19 +15,42 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.UUID;
+
 public class MainActivity extends AppCompatActivity {
 
     //save all this to local storage;
+    String uuID;
     boolean PositiveTest = false;
     boolean wasExposed = false;
-    int uuID;
-    //string[] contactList;
+    ArrayList<String> contactList = new ArrayList<String>();
 
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
     private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
+    private static final String SAVE_FILE = "userData";
+
+
+    // Setup for data file
+    File dataFile = new File(this.getFilesDir(), SAVE_FILE);
+    JSONObject json = new JSONObject();
+    FileReader fr = null;
+    FileWriter fw = null;
+    BufferedReader br = null;
+    BufferedWriter bw = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +66,27 @@ public class MainActivity extends AppCompatActivity {
         updateState();
 
 
-       // if(! null){
-            //check if uuid is in local storage
-            //generate uuid uuid =
-       // }
+        if(!dataFile.exists()) {
+            try {
+                dataFile.createNewFile();
+                fw = new FileWriter(dataFile.getAbsoluteFile());
+                bw = new BufferedWriter(fw);
+
+                uuID = UUID.randomUUID().toString();
+
+                json.put("UUID", uuID);
+                json.put("positive", PositiveTest);
+                json.put("exposed", wasExposed);
+                json.put("contacts", new JSONArray(contactList));
+
+                bw.write(json.toString());
+                bw.close();
+                fw.close();
+
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     
