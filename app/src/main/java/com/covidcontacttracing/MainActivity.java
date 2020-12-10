@@ -15,8 +15,6 @@ import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -114,6 +112,8 @@ public class MainActivity extends AppCompatActivity {
                 bw.close();
                 fw.close();
 
+                saveData();
+
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
@@ -142,10 +142,8 @@ public class MainActivity extends AppCompatActivity {
                 JSONArray jArray = json.getJSONArray("contacts");
                 for (int i = 0; i < jArray.length(); i++){
                     temp.add(jArray.getString(i));
-                    Toast.makeText(this, jArray.getString(i), Toast.LENGTH_SHORT).show();
+                    Log.i(TAG, String.format("Recent contact with device ID: %s loaded successfully.", jArray.getString(i)));
                 }
-
-                Toast.makeText(this, String.valueOf(positiveTest), Toast.LENGTH_SHORT).show();
                 contactList = temp;
 
             } catch (IOException | JSONException e) {
@@ -171,8 +169,6 @@ public class MainActivity extends AppCompatActivity {
             fw = new FileWriter(dataFile.getAbsoluteFile());
             bw = new BufferedWriter(fw);
             json = new JSONObject();
-
-            uuID= UUID.randomUUID().toString();
 
             json.put("UUID", uuID);
             json.put("positive", positiveTest);
@@ -308,6 +304,7 @@ public class MainActivity extends AppCompatActivity {
             stopService(new Intent(this, MonitorService.class));
             stopService(new Intent(this, BeaconService.class));
             beaconBttn.setText(getString(R.string.Start_Scanning));
+            saveData();
         }
 
     }
@@ -326,13 +323,12 @@ public class MainActivity extends AppCompatActivity {
      * @param view
      * @author Brett J
      */
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void checkExposure(View view) {
 
         //need to insert call to the database to check if you have been exposed
         try {
-            wasExposed = checkContact(uuID);
-        } catch(IOException e){
-            Log.println(Log.ERROR, TAG, e.getMessage());
+            wasExposed = checkContact();
         } catch(JSONException e){
             Log.println(Log.ERROR, TAG, "Invalid JSON.");
         }
@@ -371,9 +367,9 @@ public class MainActivity extends AppCompatActivity {
         TextView positiveText = (TextView) findViewById(R.id.PositiveResultText);
 
         if (positiveTest) {
-            positiveText.setText("Click the positive test button if you have received a positive test result.\nYou have not reported a positive test result.");
-        } else {
             positiveText.setText("Thank you for reporting your positive test result!\nPlease follow CDC quarantine guidelines.");
+        } else {
+            positiveText.setText("Click the positive test button if you have received a positive test result.\nYou have not reported a positive test result.");
         }
     }
 
@@ -400,18 +396,23 @@ public class MainActivity extends AppCompatActivity {
      * @throws IOException
      * @author Brett J
      */
-    public static String makeRequestGET(String urlToRead) throws IOException {
-        StringBuilder result = new StringBuilder();
-        URL url = new URL(urlToRead);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        String line;
-        while ((line = rd.readLine()) != null) {
-            result.append(line);
+    public static String makeRequestGET(String urlToRead) {
+        try {
+            StringBuilder result = new StringBuilder();
+            URL url = new URL(urlToRead);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+            while ((line = rd.readLine()) != null) {
+                result.append(line);
+            }
+            rd.close();
+            return result.toString();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
         }
-        rd.close();
-        return result.toString();
+        return "";
     }
 
     /**
@@ -442,17 +443,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * @param id - uuid of the device recording a positive result.
      * @return
-     * @throws IOException
      * @throws JSONException
-     * @author Brett J
+     * @author mknox
      */
-    public boolean checkContact(String id) throws IOException, JSONException {
-        String url = FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"';
-        String response = makeRequestGET(FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"');
-        Log.println(Log.ERROR, "OUTPUT", url+"\n"+response);
-        JSONObject object = convertString(response);
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public boolean checkContact() throws JSONException {
+
+        //todo: we should check for multiple interactions with the same device as the CDC says 'over a 15 minute span'
+
+        StringBuilder response = new StringBuilder();
+        contactList.forEach(id -> {
+            String url = FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"';
+            Log.i(TAG, url+"\n"+response);
+            response.append(makeRequestGET(FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"'));
+        });
+        JSONObject object = convertString(response.toString());
         return object.length() != 0;
     }
 

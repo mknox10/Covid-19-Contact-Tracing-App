@@ -1,7 +1,5 @@
 package com.covidcontacttracing;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Service;
@@ -21,13 +19,19 @@ import androidx.annotation.RequiresApi;
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.BeaconTransmitter;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class BeaconService extends Service {
 
+    private static final String SAVE_FILE = "userData";
     private static final String TAG = "BeaconService";
-    private static final String TEST_ID = "278581fa-48c4-4525-8e13-7dcd21999c8d";
 
     private String uuid;
     private BeaconTransmitter beaconTransmitter;
@@ -37,8 +41,7 @@ public class BeaconService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        //todo: get uuid
-        uuid = TEST_ID;
+        uuid = loadUUID();
 
         if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && BeaconTransmitter.checkTransmissionSupported(getApplicationContext()) == BeaconTransmitter.SUPPORTED) {
@@ -99,11 +102,11 @@ public class BeaconService extends Service {
     public void transmitBeacon() {
 
         Toast.makeText(this, "Device has started broadcasting to other devices.", Toast.LENGTH_SHORT).show();
-        Toast.makeText(this, "UUID: ." + uuid, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Device ID: " + uuid, Toast.LENGTH_LONG).show();
 
         Beacon beacon = new Beacon.Builder()
-                .setId1("2f234454-cf6d-4a0f-adf2-f4911ba9ffa6") // Not a clue what this means - https://altbeacon.github.io/android-beacon-library/beacon-transmitter.html
-                .setId2(uuid)
+                .setId1(uuid)
+                .setId2("2")
                 .setId3("3")
                 .setManufacturer(0x0118)
                 .setTxPower(-59)
@@ -126,5 +129,41 @@ public class BeaconService extends Service {
                 Log.i(TAG, "Advertisement start succeeded.");
             }
         });
+    }
+
+    /**
+     * load the UUID from the file stored on the device.
+     *
+     * @return UUID
+     * @author mknox
+     */
+    private String loadUUID() {
+        File dataFile = new File(this.getFilesDir(), SAVE_FILE);
+
+        FileReader fr;
+        BufferedReader br;
+        JSONObject json;
+        try {
+            fr = new FileReader(dataFile.getAbsoluteFile());
+            br = new BufferedReader(fr);
+            StringBuffer sb = new StringBuffer();
+
+            String curr = "";
+            while ((curr = br.readLine()) != null) {
+                sb.append(curr + '\n');
+            }
+            String fileContent = sb.toString();
+
+            br.close();
+            fr.close();
+
+            json = new JSONObject(fileContent);
+
+            return json.getString("UUID");
+
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 }

@@ -27,7 +27,6 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -53,7 +52,7 @@ public class MonitorService extends Service implements BeaconConsumer {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && BeaconTransmitter.checkTransmissionSupported(getApplicationContext()) == BeaconTransmitter.SUPPORTED) {
                 if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
-                    region = new Region("myRangingUniqueId", null, null, null);
+                    region = new Region("uniqueId", null, null, null);
                     beaconManager = BeaconManager.getInstanceForApplication(this);
                     beaconManager.bind(this);
 
@@ -127,8 +126,7 @@ public class MonitorService extends Service implements BeaconConsumer {
                         Beacon beacon = itr.next();
                         if (beacon.getDistance() < 2.0) {
                             Log.d(TAG, "Beacon within 2.0 meters");
-                            //todo: this might be broken
-                            beaconInteraction(beacon.getId2().toString());
+                            beaconInteraction(beacon.getId1().toString());
                         }
                     }
                 }
@@ -156,9 +154,6 @@ public class MonitorService extends Service implements BeaconConsumer {
         Log.i(TAG, message);
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
 
-        FileWriter fw;
-        BufferedReader br;
-        BufferedWriter bw;
         JSONObject json;
         String uuID = "";
         boolean PositiveTest = false;
@@ -167,11 +162,10 @@ public class MonitorService extends Service implements BeaconConsumer {
 
         File dataFile = new File(this.getFilesDir(), SAVE_FILE);
 
-
         /** Read from the file. **/
         try {
             FileReader fr = new FileReader(dataFile.getAbsoluteFile());
-            br = new BufferedReader(fr);
+            BufferedReader br = new BufferedReader(fr);
             StringBuffer sb = new StringBuffer();
 
             String curr = "";
@@ -203,8 +197,8 @@ public class MonitorService extends Service implements BeaconConsumer {
         /** Save to file. **/
         try {
             dataFile.createNewFile();
-            fw = new FileWriter(dataFile.getAbsoluteFile());
-            bw = new BufferedWriter(fw);
+            FileWriter fw = new FileWriter(dataFile.getAbsoluteFile());
+            BufferedWriter bw = new BufferedWriter(fw);
             json = new JSONObject();
 
             uuID= UUID.randomUUID().toString();
