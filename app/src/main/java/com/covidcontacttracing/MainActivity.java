@@ -11,12 +11,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,42 +34,65 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
+    //todo: could store these in the strings.xml file
+    private final String FIREBASE_URL = "https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/";
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
+    private static final String SAVE_FILE = "userData";
     private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
-    private static final String SAVE_FILE = "userData";
-    private final String FIREBASE_URL = "https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/";
 
+    private File dataFile;
 
-    // Setup for data file
-    File dataFile = new File(this.getFilesDir(), SAVE_FILE);
-    JSONObject json;
-    FileReader fr = null;
-    FileWriter fw = null;
-    BufferedReader br = null;
-    BufferedWriter bw = null;
-
-    //save all this to local storage;
-    boolean PositiveTest = false;
-    boolean wasExposed = false;
-    String uuID;
-    ArrayList<String> contactList = new ArrayList<String>();
-
-
-    String testID = "e015bbee-f604-460e-b2df-6449d0d1fc05";
-
+    // the following fields will be saved to the locally stored data file.
+    private String uuID;
+    private boolean positiveTest;
+    private boolean wasExposed;
+    private ArrayList<String> contactList = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //todo: we will need to implement something to remove positive tests after two days
+
+        dataFile = new File(this.getFilesDir(), SAVE_FILE);
+
+        uuID = "";
+        positiveTest = false;
+        wasExposed = false;
+        contactList = new ArrayList<String>();
+
+        /** Allows us to make HTTP Requests. **/
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                .permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        loadData();
+        requestPermissions();
+
+        /** Determines if whether the beacons are on. **/
         if (savedInstanceState != null && savedInstanceState.getString(SCANNING_BUTTON).equals(String.valueOf(R.string.Stop_Scanning))) {
             TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
             beaconBttn.setText(getString(R.string.Stop_Scanning));
         }
-        requestPermissions();
+
+        togglePositiveResult();
+        toggleWasExposed();
+    }
+
+    /**
+     * Retrieves data from saved file.
+     *
+     * @author Spencer F
+     */
+    public void loadData(){
+        FileReader fr;
+        FileWriter fw;
+        BufferedReader br;
+        BufferedWriter bw;
+        JSONObject json;
 
         if(!dataFile.exists()) {
             try {
@@ -83,13 +104,15 @@ public class MainActivity extends AppCompatActivity {
                 uuID = UUID.randomUUID().toString();
 
                 json.put("UUID", uuID);
-                json.put("positive", PositiveTest);
+                json.put("positive", positiveTest);
                 json.put("exposed", wasExposed);
                 json.put("contacts", new JSONArray(contactList));
 
                 bw.write(json.toString());
                 bw.close();
                 fw.close();
+
+                saveData();
 
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
@@ -112,58 +135,54 @@ public class MainActivity extends AppCompatActivity {
                 json = new JSONObject(fileContent);
 
                 uuID = json.getString("UUID");
-                PositiveTest = json.getBoolean("positive");
+                positiveTest = json.getBoolean("positive");
                 wasExposed = json.getBoolean("exposed");
 
                 ArrayList<String> temp = new ArrayList<String>();
                 JSONArray jArray = json.getJSONArray("contacts");
                 for (int i = 0; i < jArray.length(); i++){
                     temp.add(jArray.getString(i));
+                    Log.i(TAG, String.format("Recent contact with device ID: %s loaded successfully.", jArray.getString(i)));
                 }
-
                 contactList = temp;
 
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
         }
-
-        // Allows us to make HTTP Requests
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-                .permitAll().build();
-        StrictMode.setThreadPolicy(policy);
-        Log.println(Log.INFO, "TEST-ID", testID);
-        updateState();
     }
 
-    
+    /**
+     * Will save any data changes to a file stored locally.
+     *
+     * @author mknox
+     */
+    private void saveData() {
 
+        FileWriter fw;
+        BufferedWriter bw;
+        JSONObject json;
 
-    public void updateState(){
-        //call database to update info
+        try {
+            // just overrides the file
+            dataFile.createNewFile();
+            fw = new FileWriter(dataFile.getAbsoluteFile());
+            bw = new BufferedWriter(fw);
+            json = new JSONObject();
 
-       // CHECK database against interaction list
+            json.put("UUID", uuID);
+            json.put("positive", positiveTest);
+            json.put("exposed", wasExposed);
+            json.put("contacts", new JSONArray(contactList));
 
+            bw.write(json.toString());
+            bw.close();
+            fw.close();
 
-
-
-//        if(querycall.my(id) exist ){
-//            PositiveTest = true;//call database
-//        }else{
-//            PositiveTest = false;//call database
-//        }
-
-       // wasExposed = false;//call database
-
-//         PositiveTest = false;
-//         wasExposed = false;
-//         uuID;
-//        string[] contactList;
-
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
     }
-
-
-
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -177,6 +196,8 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         stopService(new Intent(this, MonitorService.class));
         stopService(new Intent(this, BeaconService.class));
+
+        saveData();
     }
 
     @Override
@@ -283,6 +304,7 @@ public class MainActivity extends AppCompatActivity {
             stopService(new Intent(this, MonitorService.class));
             stopService(new Intent(this, BeaconService.class));
             beaconBttn.setText(getString(R.string.Start_Scanning));
+            saveData();
         }
 
     }
@@ -299,27 +321,18 @@ public class MainActivity extends AppCompatActivity {
      *          source: https://www.cdc.gov/coronavirus/2019-ncov/php/contact-tracing/contact-tracing-plan/appendix.html#contact
      *
      * @param view
-     * @author ???
+     * @author Brett J
      */
-    public void CheckExposure(View view) {
-
-        TextView lblExposure = (TextView) findViewById(R.id.exposureText);
-        wasExposed = false;
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void checkExposure(View view) {
 
         //need to insert call to the database to check if you have been exposed
         try {
-            wasExposed = checkContact(testID);
-        }catch(IOException e){
-            Log.println(Log.ERROR, TAG, e.getMessage());
-        }catch(JSONException e){
+            wasExposed = checkContact();
+        } catch(JSONException e){
             Log.println(Log.ERROR, TAG, "Invalid JSON.");
         }
-        if (wasExposed) {
-            lblExposure.setText("You have been exposed please check CDC guidelines on how to quarantine ");
-        } else{
-            lblExposure.setText("You have not been exposed");
-        }
-
+        toggleWasExposed();
     }
 
     /**
@@ -334,44 +347,81 @@ public class MainActivity extends AppCompatActivity {
      *          source: https://www.cdc.gov/coronavirus/2019-ncov/php/contact-tracing/contact-tracing-plan/appendix.html#contact
      *
      * @param view
-     * @author ???
+     * @author Josh R
      */
-    public void PositiveResult(View view) {
+    public void setPositiveResult(View view) {
+        positiveTest = true;
 
-        TextView lblPositiveTest = (TextView) findViewById(R.id.PositiveResultText);
-        PositiveTest = true;
+        addPositiveCase(uuID);
 
-        //need to insert call to the database to send exposure update
+        togglePositiveResult();
+        saveData();
+    }
+
+    /**
+     * Changes the text displaying whether or not the user has reported a positive test.
+     *
+     * @author Josh R
+     */
+    private void togglePositiveResult() {
+        TextView positiveText = (TextView) findViewById(R.id.PositiveResultText);
+
+        if (positiveTest) {
+            positiveText.setText("Thank you for reporting your positive test result!\nPlease follow CDC quarantine guidelines.");
+        } else {
+            positiveText.setText("Click the positive test button if you have received a positive test result.\nYou have not reported a positive test result.");
+        }
+    }
+
+
+    /**
+     * Changes the text displaying whether or not the user has potentially been exposed to COVID-19.
+     *
+     * @author Josh R
+     */
+    private void toggleWasExposed() {
+        TextView exposureText = (TextView) findViewById(R.id.exposureText);
+
+        if (wasExposed) {
+            exposureText.setText("You may have been exposed, please refer to CDC guidelines on how to quarantine.");
+        } else {
+            exposureText.setText("You have not been exposed");
+        }
+    }
+
+
+    /**
+     * @param urlToRead
+     * @return
+     * @throws IOException
+     * @author Brett J
+     */
+    public static String makeRequestGET(String urlToRead) {
         try {
-            addPositiveCase(uuID);
-        } catch (IOException e) {
-            Log.println(Log.ERROR, TAG, "Couldn't add it.");
+            StringBuilder result = new StringBuilder();
+            URL url = new URL(urlToRead);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+            while ((line = rd.readLine()) != null) {
+                result.append(line);
+            }
+            rd.close();
+            return result.toString();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
         }
-
-
-        if (!PositiveTest) {
-            lblPositiveTest.setText(" Click the Positive test button if you have received a positive test result \nYou have not reported a positive test result");
-        } else{
-            lblPositiveTest.setText("You have reported a positive result please follow quarantine guidelines");
-        }
-
-
+        return "";
     }
 
-    public static String makeRequestGET(String urlToRead) throws IOException {
-        StringBuilder result = new StringBuilder();
-        URL url = new URL(urlToRead);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        String line;
-        while ((line = rd.readLine()) != null) {
-            result.append(line);
-        }
-        rd.close();
-        return result.toString();
-    }
-
+    /**
+     * @param urlToRead
+     * @param data
+     * @return
+     * @throws IOException
+     * @author Brett J
+     */
     public static boolean makeRequestPATCH(String urlToRead, String data) throws IOException {
         URL url = new URL(urlToRead);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -387,23 +437,48 @@ public class MainActivity extends AppCompatActivity {
         return code == 200;
     }
 
-    public static JSONObject convertString(String data) throws JSONException {
+
+    private static JSONObject convertString(String data) throws JSONException {
         return new JSONObject(data);
     }
 
-    public boolean checkContact(String id) throws IOException, JSONException {
-        String url = FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"';
-        String response = makeRequestGET(FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"');
-        Log.println(Log.ERROR, "OUTPUT", url+"\n"+response);
-        JSONObject object = convertString(response);
+    /**
+     * @return
+     * @throws JSONException
+     * @author mknox
+     */
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public boolean checkContact() throws JSONException {
+
+        //todo: we should check for multiple interactions with the same device as the CDC says 'over a 15 minute span'
+
+        StringBuilder response = new StringBuilder();
+        contactList.forEach(id -> {
+            String url = FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"';
+            Log.i(TAG, url+"\n"+response);
+            response.append(makeRequestGET(FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"'));
+        });
+        JSONObject object = convertString(response.toString());
         return object.length() != 0;
     }
 
-    public boolean addPositiveCase(String id) throws IOException {
-        //"{\"id\": \""+id+"\"}"
-        boolean response = makeRequestPATCH(FIREBASE_URL+"positive_cases.json", "{\""+id+"\": true}");
-        if(response){
-            Log.println(Log.ERROR, "OUTPUT", "Added positive case successfully.");
+    /**
+     * "{\"id\": \""+id+"\"}"
+     *
+     * @param id - uuid of the device recording a positive result.
+     * @return
+     * @throws IOException
+     * @author Brett J
+     */
+    public boolean addPositiveCase(String id) {
+        boolean response = false;
+        try {
+            response = makeRequestPATCH(FIREBASE_URL + "positive_cases.json", "{\"" + id + "\": true}");
+            if (response) {
+                Log.i(TAG, "Added positive case successfully.");
+            }
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
         }
         return response;
     }

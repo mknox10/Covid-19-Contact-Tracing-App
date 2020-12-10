@@ -20,13 +20,26 @@ import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconTransmitter;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.UUID;
 
 public class MonitorService extends Service implements BeaconConsumer {
 
+    private static final String SAVE_FILE = "userData";
     private static final String TAG = "Monitor Service";
+
     BeaconManager beaconManager;
     Region region;
 
@@ -39,7 +52,7 @@ public class MonitorService extends Service implements BeaconConsumer {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && BeaconTransmitter.checkTransmissionSupported(getApplicationContext()) == BeaconTransmitter.SUPPORTED) {
                 if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
-                    region = new Region("myRangingUniqueId", null, null, null);
+                    region = new Region("uniqueId", null, null, null);
                     beaconManager = BeaconManager.getInstanceForApplication(this);
                     beaconManager.bind(this);
 
@@ -102,6 +115,8 @@ public class MonitorService extends Service implements BeaconConsumer {
     @Override
     public void onBeaconServiceConnect() {
 
+        Toast.makeText(this, "Device has started monitoring for other devices.", Toast.LENGTH_SHORT).show();
+
         RangeNotifier rangeNotifier = new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
@@ -109,13 +124,9 @@ public class MonitorService extends Service implements BeaconConsumer {
                     Iterator<Beacon> itr = beacons.iterator();
                     while (itr.hasNext()) {
                         Beacon beacon = itr.next();
-                        /** check distance between 5.0 meters for testing purposes. **/
-                        if (beacon.getDistance() < 5.0) {
-                            Log.d(TAG, "Beacon within 5.0 meters");
-                        }
                         if (beacon.getDistance() < 2.0) {
                             Log.d(TAG, "Beacon within 2.0 meters");
-                            beaconInteraction(beacon);
+                            beaconInteraction(beacon.getId1().toString());
                         }
                     }
                 }
@@ -133,17 +144,76 @@ public class MonitorService extends Service implements BeaconConsumer {
     /**
      * Saves a new row to the interaction table with the id's of each device and the interaction timestamp.
      *
-     * @author ???
-     * @param beacon
+     * @param interactionID the device id received from the in range beacon
+     * @author mknx
      */
-    private void beaconInteraction(Beacon beacon) {
+    private void beaconInteraction(String interactionID) {
 
-        // test case - print interaction to screen. Remove this when finished.
-        Log.i(TAG, "The beacon " + beacon.toString() + " is about " + beacon.getDistance() + " meters away.");
-        Toast.makeText(this, "The beacon " + beacon.toString() + " is about " + beacon.getDistance() + " meters away.", Toast.LENGTH_SHORT).show();
+        String message = String.format("Saving interaction with device id: %s", interactionID);
 
-        //todo: save interaction to database
+        Log.i(TAG, message);
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
 
+        JSONObject json;
+        String uuID = "";
+        boolean PositiveTest = false;
+        boolean wasExposed = false;
+        ArrayList<String> contactList = new ArrayList<String>();
+
+        File dataFile = new File(this.getFilesDir(), SAVE_FILE);
+
+        /** Read from the file. **/
+        try {
+            FileReader fr = new FileReader(dataFile.getAbsoluteFile());
+            BufferedReader br = new BufferedReader(fr);
+            StringBuffer sb = new StringBuffer();
+
+            String curr = "";
+            while ((curr = br.readLine()) != null) {
+                sb.append(curr + '\n');
+            }
+            String fileContent = sb.toString();
+
+            br.close();
+            fr.close();
+
+            json = new JSONObject(fileContent);
+
+            uuID = json.getString("UUID");
+            PositiveTest = json.getBoolean("positive");
+            wasExposed = json.getBoolean("exposed");
+
+            JSONArray jArray = json.getJSONArray("contacts");
+            for (int i = 0; i < jArray.length(); i++) {
+                contactList.add(jArray.getString(i));
+            }
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+
+        /** Add this interaction to file **/
+        contactList.add(interactionID);
+
+        /** Save to file. **/
+        try {
+            dataFile.createNewFile();
+            FileWriter fw = new FileWriter(dataFile.getAbsoluteFile());
+            BufferedWriter bw = new BufferedWriter(fw);
+            json = new JSONObject();
+
+            uuID= UUID.randomUUID().toString();
+
+            json.put("UUID", uuID);
+            json.put("positive", PositiveTest);
+            json.put("exposed", wasExposed);
+            json.put("contacts", new JSONArray(contactList));
+
+            bw.write(json.toString());
+            bw.close();
+            fw.close();
+
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
     }
-
 }
