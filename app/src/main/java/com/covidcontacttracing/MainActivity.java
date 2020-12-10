@@ -196,8 +196,6 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         stopService(new Intent(this, MonitorService.class));
         stopService(new Intent(this, BeaconService.class));
-
-        saveData();
     }
 
     @Override
@@ -304,7 +302,6 @@ public class MainActivity extends AppCompatActivity {
             stopService(new Intent(this, MonitorService.class));
             stopService(new Intent(this, BeaconService.class));
             beaconBttn.setText(getString(R.string.Start_Scanning));
-            saveData();
         }
 
     }
@@ -325,6 +322,8 @@ public class MainActivity extends AppCompatActivity {
      */
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void checkExposure(View view) {
+
+        loadData();
 
         //need to insert call to the database to check if you have been exposed
         try {
@@ -350,11 +349,15 @@ public class MainActivity extends AppCompatActivity {
      * @author Josh R
      */
     public void setPositiveResult(View view) {
+
+        loadData();
+
         positiveTest = true;
 
         addPositiveCase(uuID);
 
         togglePositiveResult();
+
         saveData();
     }
 

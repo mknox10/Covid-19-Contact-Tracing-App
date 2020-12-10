@@ -201,8 +201,6 @@ public class MonitorService extends Service implements BeaconConsumer {
             BufferedWriter bw = new BufferedWriter(fw);
             json = new JSONObject();
 
-            uuID= UUID.randomUUID().toString();
-
             json.put("UUID", uuID);
             json.put("positive", PositiveTest);
             json.put("exposed", wasExposed);
