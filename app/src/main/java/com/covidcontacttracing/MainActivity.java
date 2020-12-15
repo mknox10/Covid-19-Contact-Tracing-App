@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -367,12 +368,11 @@ public class MainActivity extends AppCompatActivity {
      * @author Josh R
      */
     private void togglePositiveResult() {
-        TextView positiveText = (TextView) findViewById(R.id.PositiveResultText);
-
+        Button positiveText = findViewById(R.id.PositiveTestBttn);
         if (positiveTest) {
-            positiveText.setText("Thank you for reporting your positive test result!\nPlease follow CDC quarantine guidelines.");
+            positiveText.setText(R.string.Retract_Positive_Test_Result);
         } else {
-            positiveText.setText("Click the positive test button if you have received a positive test result.\nYou have not reported a positive test result.");
+            positiveText.setText(R.string.Submit_Positive_Test_Result);
         }
     }
 
@@ -383,7 +383,7 @@ public class MainActivity extends AppCompatActivity {
      * @author Josh R
      */
     private void toggleWasExposed() {
-        TextView exposureText = (TextView) findViewById(R.id.exposureText);
+        TextView exposureText = findViewById(R.id.ExposureText);
 
         if (wasExposed) {
             exposureText.setText("You may have been exposed, please refer to CDC guidelines on how to quarantine.");

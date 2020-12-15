@@ -136,7 +136,6 @@ public class MonitorService extends Service implements BeaconConsumer {
             beaconManager.startRangingBeaconsInRegion(region);
             beaconManager.addRangeNotifier(rangeNotifier);
         } catch (RemoteException e) {
-            //todo: log some type of error message here
             Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show();
         }
     }
