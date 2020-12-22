@@ -386,9 +386,9 @@ public class MainActivity extends AppCompatActivity {
         TextView exposureText = findViewById(R.id.ExposureText);
 
         if (wasExposed) {
-            exposureText.setText("You may have been exposed, please refer to CDC guidelines on how to quarantine.");
+            exposureText.setText(R.string.Potential_Exposure);
         } else {
-            exposureText.setText("You have not been exposed");
+            exposureText.setText(R.string.No_Exposure);
         }
     }
 

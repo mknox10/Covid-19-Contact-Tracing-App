@@ -1,10 +1,11 @@
 <resources>
     <string name="app_name">CovidContactTracing</string>
-    <string name="you_have_not_been_exposed">You have not been exposed</string>
-    <string name="ndsu_covid_19">NDSU COVID-19 Contact Tracing</string>
+    <string name="Check_Exposure">Check Exposure</string>
+    <string name="HEADER">Unofficial NDSU COVID-19 Contact Tracing App</string>
+    <string name="No_Exposure">You have not been exposed.</string>
+    <string name="Potential_Exposure">You may have been exposed, please follow CDC guidelines on how to quarantine.</string>
+    <string name="Retract_Positive_Test_Result">Retract Positive Test Result</string>
     <string name="Start_Scanning">Start Scanning</string>
     <string name="Stop_Scanning">Stop Scanning</string>
     <string name="Submit_Positive_Test_Result">Submit Positive Test Result</string>
-    <string name="Retract_Positive_Test_Result">Retract Positive Test Result</string>
-    <string name="Check_Exposure">Check Exposure</string>
 </resources>
