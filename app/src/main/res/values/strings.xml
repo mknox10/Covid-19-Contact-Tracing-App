@@ -1,11 +1,15 @@
 <resources>
     <string name="app_name">CovidContactTracing</string>
-    <string name="Check_Exposure">Check Exposure</string>
+    <string name="CHECK_EXPOSURE">Check Exposure</string>
     <string name="HEADER">Unofficial NDSU COVID-19 Contact Tracing App</string>
-    <string name="No_Exposure">You have not been exposed.</string>
-    <string name="Potential_Exposure">You may have been exposed, please follow CDC guidelines on how to quarantine.</string>
-    <string name="Retract_Positive_Test_Result">Retract Positive Test Result</string>
-    <string name="Start_Scanning">Start Scanning</string>
-    <string name="Stop_Scanning">Stop Scanning</string>
-    <string name="Submit_Positive_Test_Result">Submit Positive Test Result</string>
+    <string name="NO_EXPOSURE">You have not been exposed.</string>
+    <string name="POTENTIAL_EXPOSURE">You may have been exposed, please follow CDC guidelines on how to quarantine.</string>
+    <string name="RETRACT_POSITIVE_TEST_RESULT">Retract Positive Test Result</string>
+    <string name="START_SCANNING">Start Scanning</string>
+    <string name="STOP_SCANNING">Stop Scanning</string>
+    <string name="SUBMIT_POSITIVE_TEST_RESULT">Submit Positive Test Result</string>
+
+    <string name="FIREBASE_URL">https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/</string>
+    <string name="SAVE_FILE">userData</string>
+    <string name="SCANNING_BUTTON">ScanningBttn</string>
 </resources>

@@ -35,12 +35,8 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
-    //todo: could store these in the strings.xml file
-    private final String FIREBASE_URL = "https://covid-contact-tracing-69663-default-rtdb.firebaseio.com/";
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
-    private static final String SAVE_FILE = "userData";
-    private static final String SCANNING_BUTTON = "ScanningBttn";
     private static final String TAG = "MainActivity";
 
     private File dataFile;
@@ -58,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
         //todo: we will need to implement something to remove positive tests after two days
 
-        dataFile = new File(this.getFilesDir(), SAVE_FILE);
+        dataFile = new File(this.getFilesDir(), getString(R.string.SAVE_FILE));
 
         uuID = "";
         positiveTest = false;
@@ -74,13 +70,75 @@ public class MainActivity extends AppCompatActivity {
         requestPermissions();
 
         /** Determines if whether the beacons are on. **/
-        if (savedInstanceState != null && savedInstanceState.getString(SCANNING_BUTTON).equals(String.valueOf(R.string.Stop_Scanning))) {
+        if (savedInstanceState != null && savedInstanceState.getString(getString(R.string.SCANNING_BUTTON)).equals(getString(R.string.STOP_SCANNING))) {
             TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
-            beaconBttn.setText(getString(R.string.Stop_Scanning));
+            beaconBttn.setText(getString(R.string.STOP_SCANNING));
         }
 
         togglePositiveResult();
         toggleWasExposed();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    @Override
+    protected void onStart() {
+        super.onStart();
+        requestPermissions();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopService(new Intent(this, MonitorService.class));
+        stopService(new Intent(this, BeaconService.class));
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
+        outState.putString(getString(R.string.SCANNING_BUTTON), beaconBttn.getText().toString());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState.getString(getString(R.string.SCANNING_BUTTON)).equals(getString(R.string.STOP_SCANNING))) {
+            TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
+            beaconBttn.setText(getString(R.string.STOP_SCANNING));
+        }
+    }
+
+    /**
+     * Will save any data changes to a file stored locally.
+     *
+     * @author mknox
+     */
+    private void saveData() {
+
+        FileWriter fw;
+        BufferedWriter bw;
+        JSONObject json;
+
+        try {
+            // just overrides the file
+            dataFile.createNewFile();
+            fw = new FileWriter(dataFile.getAbsoluteFile());
+            bw = new BufferedWriter(fw);
+            json = new JSONObject();
+
+            json.put("UUID", uuID);
+            json.put("positive", positiveTest);
+            json.put("exposed", wasExposed);
+            json.put("contacts", new JSONArray(contactList));
+
+            bw.write(json.toString());
+            bw.close();
+            fw.close();
+
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -88,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
      *
      * @author Spencer F
      */
-    public void loadData(){
+    public void loadData() {
         FileReader fr;
         FileWriter fw;
         BufferedReader br;
@@ -150,68 +208,6 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    /**
-     * Will save any data changes to a file stored locally.
-     *
-     * @author mknox
-     */
-    private void saveData() {
-
-        FileWriter fw;
-        BufferedWriter bw;
-        JSONObject json;
-
-        try {
-            // just overrides the file
-            dataFile.createNewFile();
-            fw = new FileWriter(dataFile.getAbsoluteFile());
-            bw = new BufferedWriter(fw);
-            json = new JSONObject();
-
-            json.put("UUID", uuID);
-            json.put("positive", positiveTest);
-            json.put("exposed", wasExposed);
-            json.put("contacts", new JSONArray(contactList));
-
-            bw.write(json.toString());
-            bw.close();
-            fw.close();
-
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @Override
-    protected void onStart() {
-        super.onStart();
-        requestPermissions();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        stopService(new Intent(this, MonitorService.class));
-        stopService(new Intent(this, BeaconService.class));
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
-        outState.putString(SCANNING_BUTTON, beaconBttn.getText().toString());
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        if (savedInstanceState.getString(SCANNING_BUTTON).equals(String.valueOf(R.string.Stop_Scanning))) {
-            TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
-            beaconBttn.setText(getString(R.string.Stop_Scanning));
         }
     }
 
@@ -291,18 +287,18 @@ public class MainActivity extends AppCompatActivity {
     public void startBeacon(View view) {
 
         TextView beaconBttn = findViewById(R.id.StartBeaconBttn);
-        if (beaconBttn.getText().toString().equals(getString(R.string.Start_Scanning))) {
+        if (beaconBttn.getText().toString().equals(getString(R.string.START_SCANNING))) {
             try {
                 startService(new Intent(this, MonitorService.class));
                 startService(new Intent(this, BeaconService.class));
-                beaconBttn.setText(getString(R.string.Stop_Scanning));
+                beaconBttn.setText(getString(R.string.STOP_SCANNING));
             } catch (Exception e) {
-                Log.println(Log.ERROR, TAG, "Failed to start Beacons");
+                Log.e(TAG, "Failed to start beacons.");
             }
         } else {
             stopService(new Intent(this, MonitorService.class));
             stopService(new Intent(this, BeaconService.class));
-            beaconBttn.setText(getString(R.string.Start_Scanning));
+            beaconBttn.setText(getString(R.string.START_SCANNING));
         }
 
     }
@@ -319,19 +315,30 @@ public class MainActivity extends AppCompatActivity {
      *          source: https://www.cdc.gov/coronavirus/2019-ncov/php/contact-tracing/contact-tracing-plan/appendix.html#contact
      *
      * @param view
-     * @author Brett J
+     * @author Brett J/mknox
      */
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void checkExposure(View view) {
 
         loadData();
 
-        //need to insert call to the database to check if you have been exposed
+        //todo: we should check for multiple interactions with the same device as the CDC says 'over a 15 minute span'
+
+        StringBuilder response = new StringBuilder();
+        contactList.forEach(id -> {
+            String url = getString(R.string.FIREBASE_URL) + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"';
+            Log.i(TAG, url+"\n"+response);
+            response.append(makeRequestGET(getString(R.string.FIREBASE_URL) + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"'));
+        });
+
+        JSONObject object = null;
         try {
-            wasExposed = checkContact();
-        } catch(JSONException e){
-            Log.println(Log.ERROR, TAG, "Invalid JSON.");
+            object = new JSONObject(response.toString());
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to read from database.");
         }
+
+        wasExposed = object.length() != 0;
         toggleWasExposed();
     }
 
@@ -352,46 +359,21 @@ public class MainActivity extends AppCompatActivity {
     public void setPositiveResult(View view) {
 
         loadData();
+        positiveTest = !positiveTest;
 
-        positiveTest = true;
-
-        addPositiveCase(uuID);
-
-        togglePositiveResult();
-
-        saveData();
-    }
-
-    /**
-     * Changes the text displaying whether or not the user has reported a positive test.
-     *
-     * @author Josh R
-     */
-    private void togglePositiveResult() {
-        Button positiveText = findViewById(R.id.PositiveTestBttn);
         if (positiveTest) {
-            positiveText.setText(R.string.Retract_Positive_Test_Result);
+            try {
+                makeRequestPATCH(getString(R.string.FIREBASE_URL) + "positive_cases.json", "{\"" + uuID + "\": true}");
+                Log.i(TAG, "Added positive test to database.");
+            } catch (IOException ioe) {
+                Log.e(TAG, "Failed to add positive test to database.");
+            }
         } else {
-            positiveText.setText(R.string.Submit_Positive_Test_Result);
+            //todo: remove positive test from database
         }
+        saveData();
+        togglePositiveResult();
     }
-
-
-    /**
-     * Changes the text displaying whether or not the user has potentially been exposed to COVID-19.
-     *
-     * @author Josh R
-     */
-    private void toggleWasExposed() {
-        TextView exposureText = findViewById(R.id.ExposureText);
-
-        if (wasExposed) {
-            exposureText.setText(R.string.Potential_Exposure);
-        } else {
-            exposureText.setText(R.string.No_Exposure);
-        }
-    }
-
 
     /**
      * @param urlToRead
@@ -440,49 +422,31 @@ public class MainActivity extends AppCompatActivity {
         return code == 200;
     }
 
-
-    private static JSONObject convertString(String data) throws JSONException {
-        return new JSONObject(data);
-    }
-
     /**
-     * @return
-     * @throws JSONException
-     * @author mknox
-     */
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    public boolean checkContact() throws JSONException {
-
-        //todo: we should check for multiple interactions with the same device as the CDC says 'over a 15 minute span'
-
-        StringBuilder response = new StringBuilder();
-        contactList.forEach(id -> {
-            String url = FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"';
-            Log.i(TAG, url+"\n"+response);
-            response.append(makeRequestGET(FIREBASE_URL + "positive_cases.json?orderBy=\"$key\"&equalTo=\""+id+'"'));
-        });
-        JSONObject object = convertString(response.toString());
-        return object.length() != 0;
-    }
-
-    /**
-     * "{\"id\": \""+id+"\"}"
+     * Changes the text displaying whether or not the user has potentially been exposed to COVID-19.
      *
-     * @param id - uuid of the device recording a positive result.
-     * @return
-     * @throws IOException
-     * @author Brett J
+     * @author Josh R
      */
-    public boolean addPositiveCase(String id) {
-        boolean response = false;
-        try {
-            response = makeRequestPATCH(FIREBASE_URL + "positive_cases.json", "{\"" + id + "\": true}");
-            if (response) {
-                Log.i(TAG, "Added positive case successfully.");
-            }
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
+    private void toggleWasExposed() {
+        TextView exposureText = findViewById(R.id.ExposureText);
+        if (wasExposed) {
+            exposureText.setText(R.string.POTENTIAL_EXPOSURE);
+        } else {
+            exposureText.setText(R.string.NO_EXPOSURE);
         }
-        return response;
+    }
+
+    /**
+     * Changes the text displaying whether or not the user has reported a positive test.
+     *
+     * @author Josh R
+     */
+    private void togglePositiveResult() {
+        Button positiveText = findViewById(R.id.PositiveTestBttn);
+        if (positiveTest) {
+            positiveText.setText(R.string.RETRACT_POSITIVE_TEST_RESULT);
+        } else {
+            positiveText.setText(R.string.SUBMIT_POSITIVE_TEST_RESULT);
+        }
     }
 }

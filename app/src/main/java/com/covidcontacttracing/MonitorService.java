@@ -33,11 +33,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.UUID;
 
 public class MonitorService extends Service implements BeaconConsumer {
 
-    private static final String SAVE_FILE = "userData";
     private static final String TAG = "Monitor Service";
 
     BeaconManager beaconManager;
@@ -159,7 +157,7 @@ public class MonitorService extends Service implements BeaconConsumer {
         boolean wasExposed = false;
         ArrayList<String> contactList = new ArrayList<String>();
 
-        File dataFile = new File(this.getFilesDir(), SAVE_FILE);
+        File dataFile = new File(this.getFilesDir(), getString(R.string.SAVE_FILE));
 
         /** Read from the file. **/
         try {

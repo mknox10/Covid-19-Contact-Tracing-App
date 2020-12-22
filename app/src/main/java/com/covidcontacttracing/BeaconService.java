@@ -30,7 +30,6 @@ import java.util.Arrays;
 
 public class BeaconService extends Service {
 
-    private static final String SAVE_FILE = "userData";
     private static final String TAG = "BeaconService";
 
     private String uuid;
@@ -41,6 +40,7 @@ public class BeaconService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        //todo: there must be someway to pass a parameter from the main activity to the service
         uuid = loadUUID();
 
         if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -62,8 +62,8 @@ public class BeaconService extends Service {
                     builder.show();
                 }
             } else {
-                Toast.makeText(this, "Incompatible Device", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "Failed to Start Beacon Service: Incompatible Device");
+                Toast.makeText(this, "Please turn on bluetooth", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, "Failed to Start Beacon Service: Bluetooth turned off");
             }
         } else {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -138,7 +138,7 @@ public class BeaconService extends Service {
      * @author mknox
      */
     private String loadUUID() {
-        File dataFile = new File(this.getFilesDir(), SAVE_FILE);
+        File dataFile = new File(this.getFilesDir(), getString(R.string.SAVE_FILE));
 
         FileReader fr;
         BufferedReader br;
